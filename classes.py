@@ -1,7 +1,6 @@
 import pygame
 import random
 
-
 class Leaves:
     def __init__(self, width, height, path = "assets/leaves.png"):
         self.position = [0,0]
@@ -32,8 +31,12 @@ class Tree:
         screen.blit(self.image1, (0, y - w))
         screen.blit(self.image1, (0, y))
 
-    def scroll(self, dy):
-        self.y_offset += dy
+    def scroll(self, dy, isJumping):
+        if isJumping:
+            self.y_offset += dy
+        else:
+            self.y_offset = 0
+
 
 class Frog:
     def __init__(self, x, y, width, height, index):
@@ -45,25 +48,25 @@ class Frog:
         self.size = [width, height]
         self.index = index
         self.flip = False # left
-        self.path = f'assets/straight/S1.png' #based on numbering system
+        self.path = f'assets/frog0.png' #based on numbering system
         self.image = None  # Placeholder for the image, to be loaded later
         # Animation state
-        self.direction = "straight/S"
-        self.frame = 1
+        self.frame = 0
         self.frame_count = 6
         self.animating = False
         self.dx = 0
         self.dy = 0
         self.animation_timer = 0
-        self.animation_speed = 100  # ms per frame (slower)
+        self.animation_speed = 200  # ms per frame (slower)
         self.last_update = pygame.time.get_ticks()
         
-        self.jump = False
+        self.angle = 0
 
     def load_image(self):
         self.image = pygame.image.load(self.path).convert_alpha()
         self.image = pygame.transform.scale(self.image, self.size)
         self.image = pygame.transform.flip(self.image, self.flip, False)
+        self.image = pygame.transform.rotate(self.image, self.angle)
 
     def set_direction(self, farLeft, topLeft, topRight, farRight):
         # Set direction and movement based on input, start animation
@@ -73,65 +76,72 @@ class Frog:
         # farRight: D or L key
         if farLeft and topLeft:
             # Far left: Hold both A (or H) and W (or U)
-            self.direction = "farLeft/FL"
-            self.dx = -10
+            self.dx = -30
             self.dy = 5
-            self.flip = False
+            self.angle = 60
             self.animating = True
         elif farLeft or topLeft:
             # Top left: Hold A (or H) OR W (or U), but not both
-            self.direction = "topLeft/TL"
-            self.dx = -5
+            self.dx = -15
             self.dy = 7
-            self.flip = False
+            self.angle = 30
             self.animating = True
         elif topRight and farRight:
             # Far right: Hold both S (or I) and D (or L)
-            self.direction = "farLeft/FL"
-            self.dx = 10
+            self.dx = 30
             self.dy = 5
-            self.flip = True
+            self.angle = - 60
             self.animating = True
         elif topRight or farRight:
             # Top right: Hold S (or I) OR D (or L), but not both
-            self.direction = "topLeft/TL"
-            self.dx = 5
+            self.dx = 15
             self.dy = 7
-            self.flip = True
+            self.angle = -30
             self.animating = True
         else:
-            self.direction = "straight/S"
             self.dx = 0
             self.dy = 10
-            self.flip = False
+            self.angle = 0
             self.animating = True  # Always animate when straight
 
-    def update(self, screen, leaves, tree):
+    def update(self, screen, leaves, tree, isJumping):
         # Advance animation if animating
         now = pygame.time.get_ticks()
-        if self.animating and now - self.last_update > self.animation_speed:
+        if isJumping and now - self.last_update > self.animation_speed:
             self.last_update = now
             # Move Frog
             if (self.position[0] < 40 and self.dx < 0) or (self.position[0] > 450 and self.dx > 0):
-                self.direction = "straight/S"
                 self.dx = 0
                 self.dy = 5
                 self.flip = False
 
-            if not self.jump: # switching btwn 0, 1 frame for regular jumping 
-                self.frame %= 2 
-                
-            self.path = f'assets/{self.direction}{self.frame}.png'
+            '''if not self.jump: # switching btwn 0, 1 frame for regular jumping 
+                self.frame %= 2 '''
+
+            self.path = f'assets/frog{self.frame}.png'
             self.position[0] += self.dx
+            
             self.load_image()
             self.frame += 1
             if self.frame > self.frame_count:
                 self.frame = 0
+                self.load_image()
+                return False
                 # Always keep animating as long as a direction is held
+            print("jumping")
+        elif not isJumping:
+            self.frame = 0
+            self.load_image()  
+            print("not jumping, reset")
         # Draw Frog
         screen.blit(self.image, self.position)
 
-    # TODO: if jump --> do jump motion & reset self.jump = False
+    
+    
+
+
+
+
 
 
 class Fruit:
@@ -145,7 +155,6 @@ class Fruit:
         self.index = index
         self.image = None
         self.path = f"assets/fruits/f{self.index}.png"
-        #self.dimensions = [self.y, self.y + self.height, self.x, self.x + self.width]
 
     def load_image(self, screen):
         self.image = pygame.image.load(self.path).convert_alpha()
