@@ -107,7 +107,7 @@ def collisionDetection(objectsOnScreen):
     [lx, ly] = frog.position
     ygap = 50 # offset for frog image (top)
     xgap = 25
-    bottom_gap = 250 # reduce hitbox from the bottom by 40 pixels
+    bottom_gap = 350 # reduce hitbox from the bottom by 40 pixels
     for object in (objectsOnScreen):
         x_overlap = (lx + xgap < object.x + object.width and lx + frog.width  - xgap > object.x)
         y_overlap = (ly + ygap < object.y + object.height and ly + frog.height - bottom_gap > object.y)
