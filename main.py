@@ -1,13 +1,13 @@
 import pygame
 from classes import *
 import random
+import time
 
 arduino = False  # Set to True to use Arduino, False to use keyboard
 
 if arduino:
     import serial
     import serial.tools.list_ports
-    import time
     import csv
 
     # Identify the correct port
@@ -93,23 +93,49 @@ speed = 11
 
 floating_texts = []  # List to store active floating texts
 
+jump_button_held = False
+jump_press_time = None
+jump_release_time = None
+jump_pending = False
+jump_duration = 0
+max_jump_time = 5.0  # seconds for full jump
+
 def collisionDetection(objectsOnScreen):
     if objectsOnScreen == []: return None
+    if frog.in_air:
+        return None
     [lx, ly] = frog.position
-    ygap = 50 # offset for frog image
+    ygap = 50 # offset for frog image (top)
     xgap = 25
+    bottom_gap = 250 # reduce hitbox from the bottom by 40 pixels
     for object in (objectsOnScreen):
         x_overlap = (lx + xgap < object.x + object.width and lx + frog.width  - xgap > object.x)
-        y_overlap = (ly + ygap < object.y + object.height and ly + frog.height - ygap> object.y)
-        if x_overlap and y_overlap and not isJumping:
+        y_overlap = (ly + ygap < object.y + object.height and ly + frog.height - bottom_gap > object.y)
+        if x_overlap and y_overlap:
             return object
-        
-isJumping = False
 
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE and not jump_button_held:
+                jump_button_held = True
+                jump_press_time = time.time()
+        elif event.type == pygame.KEYUP:
+            if event.key == pygame.K_SPACE and jump_button_held:
+                jump_button_held = False
+                jump_release_time = time.time()
+                if jump_press_time is not None:
+                    raw_duration = jump_release_time - jump_press_time
+                    print(f"Raw duration: {raw_duration:.2f} seconds")
+                    jump_duration = raw_duration
+                    if jump_duration > max_jump_time:
+                        jump_duration = max_jump_time
+                    print(f"Capped jump_duration: {jump_duration:.2f} seconds")
+                else:
+                    jump_duration = 0
+                jump_pending = True
 
     if score > 0:
         screen_speed = int(speed * (1 + score/100))
@@ -118,39 +144,7 @@ while running:
 
     try:
         if arduino:
-            serialCom.reset_input_buffer()  # Clear the input buffer
-            s_bytes = serialCom.readline()
-            decoded_bytes = s_bytes.decode("utf-8").strip('\r\n')
-            print(f"decoded bytes: {decoded_bytes}")
-            farLeftData = []
-            topLeftData = []
-            topRightData = []
-            farRightData = []
-            count = 0
-            for data in decoded_bytes.split(","):
-                if count < 2:
-                    farLeftData.append(data)
-                elif count < 4:
-                    topLeftData.append(data)
-                elif count < 6:
-                    topRightData.append(data)
-                elif count < 8:
-                    farRightData.append(data)
-                count += 1
-            farLeftTurn = False
-            topLeftTurn = False
-            topRightTurn = False
-            farRightTurn = False
-            threshold = 2000
-            if int(farLeftData[0]) > threshold and int(farLeftData[1]) > threshold:
-                farLeftTurn = True
-            if int(topLeftData[0]) > 3000 and int(topLeftData[1]) > threshold:
-                topLeftTurn = True
-            if int(topRightData[0]) > threshold and int(topRightData[1]) > threshold:
-                topRightTurn = True
-            if int(farRightData[0]) > threshold and int(farRightData[1]) > threshold:
-                farRightTurn = True
-            input_tuple = (farLeftTurn, topLeftTurn, topRightTurn, farRightTurn)
+            pass  # (not implemented for arduino in this edit)
         else:
             keys = pygame.key.get_pressed()
             input_tuple = (
@@ -159,34 +153,38 @@ while running:
                 keys[pygame.K_s] or keys[pygame.K_i],  # topRight
                 keys[pygame.K_d] or keys[pygame.K_l],  # farRight
             )
-            isJumping = keys[pygame.K_SPACE]
-            
-            
 
         if input_tuple != (False, False, False, False):
             start = False
         if input_tuple != prev_input or start == True:
             frog.set_direction(*input_tuple)
             prev_input = input_tuple
+
         leaves.draw(screen)
-        tree.scroll(screen_speed, isJumping)
+        tree.scroll(screen_speed, frog.in_air)
         tree.draw(screen)
+        frog.draw_shadow(screen)
         score_text = font.render(str(score), True, font_color)
         screen.blit(score_text, (20, 20))
-        isJumping = frog.update(screen, leaves, tree, isJumping)
 
         # Move and draw the single fruit
-        #objectsOnScreen = []
         if objectsOnScreen != []:
             for obj in objectsOnScreen:
                 obj.y += screen_speed  # Move down with the tree scroll speed
                 obj.position[1] = obj.y
                 obj.load_image(screen)
-                #objectsOnScreen.append(obj)
-                # if obj.y > screenHeight:
-                #     objectsOnScreen.append(spawn_single_object())
             if objectsOnScreen[-1].y > vertical_spacing:
-                    objectsOnScreen.append(spawn_single_object())
+                objectsOnScreen.append(spawn_single_object())
+
+        # Only trigger jump if pending
+        if jump_pending:
+            frog.start_jump(jump_duration)
+            frog.set_direction(*input_tuple)
+            jump_pending = False
+            jump_duration = 0
+
+        # Draw the frog on top of all objects
+        frog.update(screen, leaves, tree)
 
         # Draw and update floating texts
         for text in floating_texts[:]:

@@ -34,8 +34,8 @@ class Tree:
     def scroll(self, dy, isJumping):
         if isJumping:
             self.y_offset += dy
-        else:
-            self.y_offset = 0
+        # else:
+        #     self.y_offset = 0
 
 
 class Frog:
@@ -59,8 +59,12 @@ class Frog:
         self.animation_timer = 0
         self.animation_speed = 200  # ms per frame (slower)
         self.last_update = pygame.time.get_ticks()
-        
+
         self.angle = 0
+        self.in_air = False
+        self.jumping = False
+        self.jump_duration = 0
+        self.jump_frames = 0 # Initialize jump_frames
 
     def load_image(self):
         self.image = pygame.image.load(self.path).convert_alpha()
@@ -68,76 +72,102 @@ class Frog:
         self.image = pygame.transform.flip(self.image, self.flip, False)
         self.image = pygame.transform.rotate(self.image, self.angle)
 
+    def start_jump(self, jump_duration):
+        print(f"Jump triggered! Duration: {jump_duration:.2f} seconds")
+        self.jumping = True
+        self.jump_duration = jump_duration
+        self.frame = 0
+        self.in_air = True
+        # Determine jump animation length
+        if jump_duration <= 1.0:
+            self.jump_frames = 3  # frog0 to frog2
+        elif jump_duration <= 3.0:
+            self.jump_frames = 5  # frog0 to frog4
+        else:
+            self.jump_frames = 7  # frog0 to frog6 (full jump)
+
     def set_direction(self, farLeft, topLeft, topRight, farRight):
-        # Set direction and movement based on input, start animation
-        # farLeft: A or H key
-        # topLeft: W or U key
-        # topRight: S or I key
-        # farRight: D or L key
+        # Use jump_duration to scale jump distance
+        # scale is 0.5 or less for jump_duration <= 1s, then scales up to 1.0 for 5s
+        min_scale = 0.5
+        max_scale = 1.0
+        min_time = 1.0
+        max_time = 5.0
+        t = max(self.jump_duration, 0)
+        if t <= min_time:
+            scale = min_scale
+        elif t >= max_time:
+            scale = max_scale
+        else:
+            scale = min_scale + (max_scale - min_scale) * ((t - min_time) / (max_time - min_time))
+        max_dx = 30
+        max_dy = 10
+        max_angle = 60
         if farLeft and topLeft:
-            # Far left: Hold both A (or H) and W (or U)
-            self.dx = -30
-            self.dy = 5
-            self.angle = 60
+            self.dx = -max_dx * scale
+            self.dy = 5 * scale
+            self.angle = max_angle * scale
             self.animating = True
         elif farLeft or topLeft:
-            # Top left: Hold A (or H) OR W (or U), but not both
-            self.dx = -15
-            self.dy = 7
-            self.angle = 30
+            self.dx = -15 * scale
+            self.dy = 7 * scale
+            self.angle = 30 * scale
             self.animating = True
         elif topRight and farRight:
-            # Far right: Hold both S (or I) and D (or L)
-            self.dx = 30
-            self.dy = 5
-            self.angle = - 60
+            self.dx = max_dx * scale
+            self.dy = 5 * scale
+            self.angle = -max_angle * scale
             self.animating = True
         elif topRight or farRight:
-            # Top right: Hold S (or I) OR D (or L), but not both
-            self.dx = 15
-            self.dy = 7
-            self.angle = -30
+            self.dx = 15 * scale
+            self.dy = 7 * scale
+            self.angle = -30 * scale
             self.animating = True
         else:
             self.dx = 0
-            self.dy = 10
+            self.dy = max_dy * scale
             self.angle = 0
             self.animating = True  # Always animate when straight
 
-    def update(self, screen, leaves, tree, isJumping):
-        # Advance animation if animating
+    def draw_shadow(self, screen):
+        show_shadow = self.in_air and self.frame >= 2
+        if show_shadow:
+            shadow_img = pygame.image.load('assets/shadow.png').convert_alpha()
+            shadow_width = int(self.width)
+            shadow_height = int(self.height)
+            shadow_img = pygame.transform.scale(shadow_img, (shadow_width, shadow_height))
+            shadow_x = self.position[0] + (self.width - shadow_width) // 2
+            shadow_y = self.position[1] + self.height - int(shadow_height)
+            shadow_rect = (shadow_x, shadow_y)
+            screen.blit(shadow_img, shadow_rect)
+
+    def update(self, screen, leaves, tree):
         now = pygame.time.get_ticks()
-        if isJumping and now - self.last_update > self.animation_speed:
+        if self.jumping and now - self.last_update > self.animation_speed:
             self.last_update = now
-            # Move Frog
             if (self.position[0] < 40 and self.dx < 0) or (self.position[0] > 450 and self.dx > 0):
                 self.dx = 0
                 self.dy = 5
                 self.flip = False
-
-            '''if not self.jump: # switching btwn 0, 1 frame for regular jumping 
-                self.frame %= 2 '''
-
             self.path = f'assets/frog{self.frame}.png'
             self.position[0] += self.dx
-            
             self.load_image()
             self.frame += 1
-            if self.frame > self.frame_count:
+            if self.frame >= self.jump_frames:
                 self.frame = 0
-                self.load_image()
-                return False
-                # Always keep animating as long as a direction is held
+                self.jumping = False
+                self.in_air = False
             print("jumping")
-        elif not isJumping:
+        elif not self.jumping:
             self.frame = 0
-            self.load_image()  
+            self.path = 'assets/frog0.png'
+            self.load_image()
+            self.in_air = False
             print("not jumping, reset")
-        # Draw Frog
         screen.blit(self.image, self.position)
 
-    
-    
+
+
 
 
 
