@@ -40,11 +40,10 @@ class Tree:
 
 class Frog:
     def __init__(self, x, y, width, height, index):
-        self.x = x
-        self.y = y
         self.width = width
         self.height = height
-        self.position = [self.x, self.y]
+        # Treat position as the center
+        self.position = [x + width // 2, y + height // 2]
         self.size = [width, height]
         self.index = index
         self.flip = False # left
@@ -65,15 +64,59 @@ class Frog:
         self.jumping = False
         self.jump_duration = 0
         self.jump_frames = 0 # Initialize jump_frames
+        # New for facing logic
+        self.facing_angle = 0  # 0 = forward, -60 = left, 60 = right
+        self.last_facing = 0   # Track last facing for jump direction
+        self.facing_set = False  # Track if a single leg was pressed before jump
 
     def load_image(self):
         self.image = pygame.image.load(self.path).convert_alpha()
         self.image = pygame.transform.scale(self.image, self.size)
         self.image = pygame.transform.flip(self.image, self.flip, False)
-        # Save the center before rotation
-        orig_center = (self.position[0] + self.width // 2, self.position[1] + self.height // 2)
+        # Use center-based position
+        orig_center = (int(self.position[0]), int(self.position[1]))
         self.image = pygame.transform.rotate(self.image, self.angle)
         self.rect = self.image.get_rect(center=orig_center)
+
+    def set_facing(self, left, right):
+        """
+        Set frog's facing direction based on single leg input.
+        Only rotates, does not jump.
+        """
+        # Define step angle (now 45 deg)
+        step = 45
+        max_angle = 45
+        # Only one direction at a time
+        if left and not right:
+            if self.facing_angle < 0:
+                # If facing right, move toward front
+                self.facing_angle += step
+            elif self.facing_angle == 0:
+                # If facing front, turn left
+                self.facing_angle = step
+            elif self.facing_angle > 0:
+                # If already left, turn more left (max 45)
+                self.facing_angle = min(self.facing_angle + step, max_angle)
+            self.last_facing = self.facing_angle
+            self.facing_set = True
+        elif right and not left:
+            if self.facing_angle > 0:
+                # If facing left, move toward front
+                self.facing_angle -= step
+            elif self.facing_angle == 0:
+                # If facing front, turn right
+                self.facing_angle = -step
+            elif self.facing_angle < 0:
+                # If already right, turn more right (max -45)
+                self.facing_angle = max(self.facing_angle - step, -max_angle)
+            self.last_facing = self.facing_angle
+            self.facing_set = True
+        else:
+            self.facing_angle = 0  # forward
+            self.last_facing = 0
+            self.facing_set = False
+        self.angle = self.facing_angle
+        self.load_image()
 
     def start_jump(self, jump_duration):
         print(f"Jump triggered! Duration: {jump_duration:.2f} seconds")
@@ -88,10 +131,40 @@ class Frog:
             self.jump_frames = 5  # frog0 to frog4
         else:
             self.jump_frames = 7  # frog0 to frog6 (full jump)
+        # Set jump direction based on facing
+        min_scale = 0.5
+        max_scale = 1.0
+        min_time = 1.0
+        max_time = 5.0
+        t = max(self.jump_duration, 0)
+        if t <= min_time:
+            scale = min_scale
+        elif t >= max_time:
+            scale = max_scale
+        else:
+            scale = min_scale + (max_scale - min_scale) * ((t - min_time) / (max_time - min_time))
+        max_dx = 30
+        max_dy = 10
+        # Use the current facing angle to determine direction
+        if self.facing_set:
+            if self.facing_angle > 0:  # left
+                self.dx = -max_dx * scale
+                self.angle = self.facing_angle
+            elif self.facing_angle < 0:  # right
+                self.dx = max_dx * scale
+                self.angle = self.facing_angle
+            else:  # forward
+                self.dx = 0
+                self.angle = 0
+        else:
+            self.dx = 0
+            self.angle = 0
+        self.dy = max_dy * scale
+        self.animating = True
+        self.load_image()
 
     def set_direction(self, left, right):
         # Use jump_duration to scale jump distance
-        # scale is 0.5 or less for jump_duration <= 1s, then scales up to 1.0 for 5s
         min_scale = 0.5
         max_scale = 1.0
         min_time = 1.0
@@ -131,28 +204,39 @@ class Frog:
             shadow_img = pygame.transform.scale(shadow_img, (shadow_width, shadow_height))
             # Rotate the shadow by the frog's angle
             shadow_img = pygame.transform.rotate(shadow_img, self.angle)
-            # Adjust position for rotated image
+            # Place the shadow's midbottom at the frog's bottom center
             shadow_rect = shadow_img.get_rect()
-            shadow_x = self.position[0] + (self.width - shadow_rect.width) // 2
-            shadow_y = self.position[1] + self.height - int(shadow_rect.height)
-            screen.blit(shadow_img, (shadow_x, shadow_y))
+            anchor_x = int(self.position[0])
+            anchor_y = int(self.position[1] + self.height // 2)
+            shadow_rect.midbottom = (anchor_x, anchor_y)
+            # Draw debug circle at anchor point
+            # pygame.draw.circle(screen, (255,0,0), (anchor_x, anchor_y), 10)
+            screen.blit(shadow_img, shadow_rect.topleft)
 
     def update(self, screen, leaves, tree):
         now = pygame.time.get_ticks()
         if self.jumping and now - self.last_update > self.animation_speed:
             self.last_update = now
-            if (self.position[0] < 40 and self.dx < 0) or (self.position[0] > 450 and self.dx > 0):
+            # Clamp movement to screen bounds (center-based)
+            if (self.position[0] - self.width // 2 < 40 and self.dx < 0) or (self.position[0] + self.width // 2 > 450 and self.dx > 0):
                 self.dx = 0
                 self.dy = 5
                 self.flip = False
             self.path = f'assets/frog{self.frame}.png'
             self.position[0] += self.dx
+            # self.position[1] += self.dy  # Uncomment if vertical movement is needed
             self.load_image()
             self.frame += 1
             if self.frame >= self.jump_frames:
                 self.frame = 0
                 self.jumping = False
                 self.in_air = False
+                # Reset facing to forward after jump
+                self.facing_angle = 0
+                self.last_facing = 0
+                self.facing_set = False
+                self.angle = 0
+                self.load_image()
             print("jumping")
         elif not self.jumping:
             self.frame = 0

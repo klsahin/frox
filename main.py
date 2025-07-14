@@ -19,7 +19,7 @@ if arduino:
     f.truncate()
 
     # Open the serial com
-    serialCom = serial.Serial('/dev/cu.usbserial-110',115200)
+    serialCom = serial.Serial('/dev/cu.usbserial-10',115200)
 
     # Toggle DTR to reset the Arduino
     serialCom.dtr = False
@@ -162,7 +162,7 @@ while running:
             if (leftTurn and rightTurn) and not jump_button_held:
                 jump_button_held = True
                 jump_press_time = time.time()
-                
+
                 # Compute average direction
                 if direction_list:
                     avg = sum(direction_list) / len(direction_list)
@@ -191,7 +191,7 @@ while running:
                 else:
                     jump_duration = 0
                 jump_pending = True
-            
+
 
 
         else:
@@ -217,11 +217,12 @@ while running:
             keys = pygame.key.get_pressed()
             averaged_direction = (keys[pygame.K_LEFT], keys[pygame.K_RIGHT])
 
-        # if input_tuple != (False, False):
-        #     start = False
+        # New frog control logic:
+        # If only one leg is pressed, set facing (rotate, no jump)
         if averaged_direction != prev_input:
-             frog.set_direction(*averaged_direction)
-             prev_input = averaged_direction
+            if (averaged_direction[0] and not averaged_direction[1]) or (averaged_direction[1] and not averaged_direction[0]):
+                frog.set_facing(*averaged_direction)
+            prev_input = averaged_direction
 
         leaves.draw(screen)
         tree.scroll(screen_speed, frog.in_air)
@@ -242,7 +243,6 @@ while running:
         # Only trigger jump if pending
         if jump_pending:
             frog.start_jump(jump_duration)
-            frog.set_direction(*averaged_direction)
             jump_pending = False
             jump_duration = 0
 
