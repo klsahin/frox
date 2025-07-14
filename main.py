@@ -3,7 +3,7 @@ from classes import *
 import random
 import time
 
-arduino = False  # Set to True to use Arduino, False to use keyboard
+arduino = True  # Set to True to use Arduino, False to use keyboard
 
 if arduino:
     import serial
@@ -118,12 +118,29 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE and not jump_button_held:
+
+    if score > 0:
+        screen_speed = int(speed * (1 + score/100))
+    else:
+        screen_speed = speed
+
+    try:
+        if arduino:
+            serialCom.reset_input_buffer()  # Clear the input buffer
+            s_bytes = serialCom.readline()
+            decoded_bytes = s_bytes.decode("utf-8").strip('\r\n')
+            print(f"decoded bytes: {decoded_bytes}")
+            rightData, leftData = decoded_bytes.split(',')
+            leftData = float(leftData)
+            rightData = float(rightData)
+            leftTurn = rightTurn  = False
+            threshold = 1000
+            if leftData > threshold: leftTurn = True
+            if rightData > threshold: right = True
+            if leftTurn and rightTurn and not jump_button_held: 
                 jump_button_held = True
                 jump_press_time = time.time()
-        elif event.type == pygame.KEYUP:
-            if event.key == pygame.K_SPACE and jump_button_held:
+            if not(leftTurn and rightTurn) and jump_button_held:
                 jump_button_held = False
                 jump_release_time = time.time()
                 if jump_press_time is not None:
@@ -136,25 +153,31 @@ while running:
                 else:
                     jump_duration = 0
                 jump_pending = True
-
-    if score > 0:
-        screen_speed = int(speed * (1 + score/100))
-    else:
-        screen_speed = speed
-
-    try:
-        if arduino:
-            pass  # (not implemented for arduino in this edit)
+            input_tuple = (leftData, rightData)
         else:
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE and not jump_button_held:
+                        jump_button_held = True
+                        jump_press_time = time.time()
+                elif event.type == pygame.KEYUP:
+                    if event.key == pygame.K_SPACE and jump_button_held:
+                        jump_button_held = False
+                        jump_release_time = time.time()
+                        if jump_press_time is not None:
+                            raw_duration = jump_release_time - jump_press_time
+                            print(f"Raw duration: {raw_duration:.2f} seconds")
+                            jump_duration = raw_duration
+                            if jump_duration > max_jump_time:
+                                jump_duration = max_jump_time
+                            print(f"Capped jump_duration: {jump_duration:.2f} seconds")
+                        else:
+                            jump_duration = 0
+                        jump_pending = True
             keys = pygame.key.get_pressed()
-            input_tuple = (
-                keys[pygame.K_a] or keys[pygame.K_h],  # farLeft
-                keys[pygame.K_w] or keys[pygame.K_u],  # topLeft
-                keys[pygame.K_s] or keys[pygame.K_i],  # topRight
-                keys[pygame.K_d] or keys[pygame.K_l],  # farRight
-            )
+            input_tuple = (keys[pygame.K_LEFT], keys[pygame.K_RIGHT])
 
-        if input_tuple != (False, False, False, False):
+        if input_tuple != (False, False):
             start = False
         if input_tuple != prev_input or start == True:
             frog.set_direction(*input_tuple)

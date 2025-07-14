@@ -86,7 +86,7 @@ class Frog:
         else:
             self.jump_frames = 7  # frog0 to frog6 (full jump)
 
-    def set_direction(self, farLeft, topLeft, topRight, farRight):
+    def set_direction(self, left, right):
         # Use jump_duration to scale jump distance
         # scale is 0.5 or less for jump_duration <= 1s, then scales up to 1.0 for 5s
         min_scale = 0.5
@@ -103,27 +103,27 @@ class Frog:
         max_dx = 30
         max_dy = 10
         max_angle = 60
-        if farLeft and topLeft:
+        if left and not right:
             self.dx = -max_dx * scale
             self.dy = 5 * scale
             self.angle = max_angle * scale
             self.animating = True
-        elif farLeft or topLeft:
-            self.dx = -15 * scale
-            self.dy = 7 * scale
-            self.angle = 30 * scale
-            self.animating = True
-        elif topRight and farRight:
+        # elif topRight and farRight:
+        #     self.dx = max_dx * scale
+        #     self.dy = 5 * scale
+        #     self.angle = -max_angle * scale
+        #     self.animating = True
+        # elif topRight or farRight:
+        #     self.dx = 15 * scale
+        #     self.dy = 7 * scale
+        #     self.angle = -30 * scale
+        #     self.animating = True
+        elif right and not left:
             self.dx = max_dx * scale
             self.dy = 5 * scale
-            self.angle = -max_angle * scale
+            self.angle = - max_angle * scale
             self.animating = True
-        elif topRight or farRight:
-            self.dx = 15 * scale
-            self.dy = 7 * scale
-            self.angle = -30 * scale
-            self.animating = True
-        else:
+        elif not left and not right: # straight and not jumping
             self.dx = 0
             self.dy = max_dy * scale
             self.angle = 0
