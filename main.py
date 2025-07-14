@@ -19,7 +19,7 @@ if arduino:
     f.truncate()
 
     # Open the serial com
-    serialCom = serial.Serial('/dev/cu.usbserial-110',115200)
+    serialCom = serial.Serial('/dev/cu.usbserial-10',115200)
 
     # Toggle DTR to reset the Arduino
     serialCom.dtr = False
@@ -126,7 +126,7 @@ while running:
     else:
         screen_speed = speed
 
-    
+
 
     try:
         if arduino:
@@ -141,12 +141,12 @@ while running:
             threshold = 1000
             if leftData > threshold: leftTurn = True
             if rightData > threshold: rightTurn = True
-            
+
             if not(leftTurn and rightTurn) and not jump_button_held: # jumping
                 last_direction_before_jump = (leftTurn, rightTurn)
-            
-            
-            elif leftTurn and rightTurn and not jump_button_held: 
+
+
+            elif leftTurn and rightTurn and not jump_button_held:
                 jump_button_held = True
                 jump_press_time = time.time()
 

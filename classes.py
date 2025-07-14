@@ -70,7 +70,10 @@ class Frog:
         self.image = pygame.image.load(self.path).convert_alpha()
         self.image = pygame.transform.scale(self.image, self.size)
         self.image = pygame.transform.flip(self.image, self.flip, False)
+        # Save the center before rotation
+        orig_center = (self.position[0] + self.width // 2, self.position[1] + self.height // 2)
         self.image = pygame.transform.rotate(self.image, self.angle)
+        self.rect = self.image.get_rect(center=orig_center)
 
     def start_jump(self, jump_duration):
         print(f"Jump triggered! Duration: {jump_duration:.2f} seconds")
@@ -108,20 +111,10 @@ class Frog:
             self.dy = 5 * scale
             self.angle = max_angle * scale
             self.animating = True
-        # elif topRight and farRight:
-        #     self.dx = max_dx * scale
-        #     self.dy = 5 * scale
-        #     self.angle = -max_angle * scale
-        #     self.animating = True
-        # elif topRight or farRight:
-        #     self.dx = 15 * scale
-        #     self.dy = 7 * scale
-        #     self.angle = -30 * scale
-        #     self.animating = True
         elif right and not left:
             self.dx = max_dx * scale
             self.dy = 5 * scale
-            self.angle = - max_angle * scale
+            self.angle = -max_angle * scale  #
             self.animating = True
         elif not left and not right: # straight and not jumping
             self.dx = 0
@@ -136,10 +129,13 @@ class Frog:
             shadow_width = int(self.width)
             shadow_height = int(self.height)
             shadow_img = pygame.transform.scale(shadow_img, (shadow_width, shadow_height))
-            shadow_x = self.position[0] + (self.width - shadow_width) // 2
-            shadow_y = self.position[1] + self.height - int(shadow_height)
-            shadow_rect = (shadow_x, shadow_y)
-            screen.blit(shadow_img, shadow_rect)
+            # Rotate the shadow by the frog's angle
+            shadow_img = pygame.transform.rotate(shadow_img, self.angle)
+            # Adjust position for rotated image
+            shadow_rect = shadow_img.get_rect()
+            shadow_x = self.position[0] + (self.width - shadow_rect.width) // 2
+            shadow_y = self.position[1] + self.height - int(shadow_rect.height)
+            screen.blit(shadow_img, (shadow_x, shadow_y))
 
     def update(self, screen, leaves, tree):
         now = pygame.time.get_ticks()
@@ -164,7 +160,7 @@ class Frog:
             self.load_image()
             self.in_air = False
             print("not jumping, reset")
-        screen.blit(self.image, self.position)
+        screen.blit(self.image, self.rect.topleft)
 
 
 
