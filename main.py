@@ -19,7 +19,7 @@ if arduino:
     f.truncate()
 
     # Open the serial com
-    serialCom = serial.Serial('/dev/cu.usbserial-10',115200)
+    serialCom = serial.Serial('/dev/cu.usbserial-110',115200)
 
     # Toggle DTR to reset the Arduino
     serialCom.dtr = False
@@ -76,7 +76,7 @@ def draw_objects():
     tree.draw(screen)
     # frog drawing is now handled in frog.update()
 
-prev_input = (False, False, False, False)
+prev_input = (False, False)
 start = True
 score = 0
 objectsOnScreen = []
@@ -99,8 +99,8 @@ jump_release_time = None
 jump_pending = False
 jump_duration = 0
 max_jump_time = 5.0  # seconds for full jump
-input_tuple = (False, False)
-last_direction_before_jump = (False, False)
+
+direction_list = []
 
 def collisionDetection(objectsOnScreen):
     if objectsOnScreen == []: return None
@@ -133,8 +133,9 @@ while running:
             serialCom.reset_input_buffer()  # Clear the input buffer
             s_bytes = serialCom.readline()
             decoded_bytes = s_bytes.decode("utf-8").strip('\r\n')
-            print(f"decoded bytes: {decoded_bytes}")
+            #print(f"decoded bytes: {decoded_bytes}")
             rightData, leftData = decoded_bytes.split(',')
+            print(f"decoded bytes: {leftData}, {rightData}")
             leftData = float(leftData)
             rightData = float(rightData)
             leftTurn = rightTurn  = False
@@ -142,15 +143,42 @@ while running:
             if leftData > threshold: leftTurn = True
             if rightData > threshold: rightTurn = True
 
-            if not(leftTurn and rightTurn) and not jump_button_held: # jumping
-                last_direction_before_jump = (leftTurn, rightTurn)
+            averaged_direction = (False, False)
+
+            # when NOT both (turning):
+            if not (leftTurn and rightTurn):
+                # Record direction: -1 for left, 1 for right, 0 for straight
+                if leftTurn and not rightTurn:
+                    direction_list.append(-1)
+                elif rightTurn and not leftTurn:
+                    direction_list.append(1)
+                else:
+                    direction_list.append(0)
+
+                averaged_direction = (leftTurn, rightTurn)
 
 
-            elif leftTurn and rightTurn and not jump_button_held:
+            # When both are pressed (jump initiation)
+            if (leftTurn and rightTurn) and not jump_button_held:
                 jump_button_held = True
                 jump_press_time = time.time()
+                
+                # Compute average direction
+                if direction_list:
+                    avg = sum(direction_list) / len(direction_list)
+                    if avg < -0.33:
+                        averaged_direction = (True, False)   # left
+                    elif avg > 0.33:
+                        averaged_direction = (False, True)   # right
+                    else:
+                        averaged_direction = (leftTurn, rightTurn)  # straight
+                else:
+                    averaged_direction = (leftTurn, rightTurn)      # default to straight
+                print(f"averaged_direction: {averaged_direction}")
+                direction_list = []
 
-            elif not leftTurn and not rightTurn and jump_button_held:
+            # When jump released
+            if not leftTurn and not rightTurn and jump_button_held:
                 jump_button_held = False
                 jump_release_time = time.time()
                 if jump_press_time is not None:
@@ -163,7 +191,7 @@ while running:
                 else:
                     jump_duration = 0
                 jump_pending = True
-            input_tuple = (leftData, rightData)
+            
 
 
         else:
@@ -187,13 +215,13 @@ while running:
                             jump_duration = 0
                         jump_pending = True
             keys = pygame.key.get_pressed()
-            input_tuple = (keys[pygame.K_LEFT], keys[pygame.K_RIGHT])
+            averaged_direction = (keys[pygame.K_LEFT], keys[pygame.K_RIGHT])
 
-        if input_tuple != (False, False):
-            start = False
-        if input_tuple != prev_input or start == True:
-            frog.set_direction(*last_direction_before_jump)
-            prev_input = input_tuple
+        # if input_tuple != (False, False):
+        #     start = False
+        if averaged_direction != prev_input:
+             frog.set_direction(*averaged_direction)
+             prev_input = averaged_direction
 
         leaves.draw(screen)
         tree.scroll(screen_speed, frog.in_air)
@@ -214,7 +242,7 @@ while running:
         # Only trigger jump if pending
         if jump_pending:
             frog.start_jump(jump_duration)
-            frog.set_direction(*last_direction_before_jump)
+            frog.set_direction(*averaged_direction)
             jump_pending = False
             jump_duration = 0
 
