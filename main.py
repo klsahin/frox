@@ -136,11 +136,11 @@ while running:
             leftTurn = rightTurn  = False
             threshold = 1000
             if leftData > threshold: leftTurn = True
-            if rightData > threshold: right = True
+            if rightData > threshold: rightTurn = True
             if leftTurn and rightTurn and not jump_button_held: 
                 jump_button_held = True
                 jump_press_time = time.time()
-            if not(leftTurn and rightTurn) and jump_button_held:
+            if not leftTurn and not rightTurn and jump_button_held:
                 jump_button_held = False
                 jump_release_time = time.time()
                 if jump_press_time is not None:
