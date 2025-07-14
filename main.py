@@ -99,6 +99,8 @@ jump_release_time = None
 jump_pending = False
 jump_duration = 0
 max_jump_time = 5.0  # seconds for full jump
+input_tuple = (False, False)
+last_direction_before_jump = (False, False)
 
 def collisionDetection(objectsOnScreen):
     if objectsOnScreen == []: return None
@@ -124,6 +126,8 @@ while running:
     else:
         screen_speed = speed
 
+    
+
     try:
         if arduino:
             serialCom.reset_input_buffer()  # Clear the input buffer
@@ -137,10 +141,16 @@ while running:
             threshold = 1000
             if leftData > threshold: leftTurn = True
             if rightData > threshold: rightTurn = True
-            if leftTurn and rightTurn and not jump_button_held: 
+            
+            if not(leftTurn and rightTurn) and not jump_button_held: # jumping
+                last_direction_before_jump = (leftTurn, rightTurn)
+            
+            
+            elif leftTurn and rightTurn and not jump_button_held: 
                 jump_button_held = True
                 jump_press_time = time.time()
-            if not leftTurn and not rightTurn and jump_button_held:
+
+            elif not leftTurn and not rightTurn and jump_button_held:
                 jump_button_held = False
                 jump_release_time = time.time()
                 if jump_press_time is not None:
@@ -154,6 +164,8 @@ while running:
                     jump_duration = 0
                 jump_pending = True
             input_tuple = (leftData, rightData)
+
+
         else:
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
@@ -180,7 +192,7 @@ while running:
         if input_tuple != (False, False):
             start = False
         if input_tuple != prev_input or start == True:
-            frog.set_direction(*input_tuple)
+            frog.set_direction(*last_direction_before_jump)
             prev_input = input_tuple
 
         leaves.draw(screen)
@@ -202,7 +214,7 @@ while running:
         # Only trigger jump if pending
         if jump_pending:
             frog.start_jump(jump_duration)
-            frog.set_direction(*input_tuple)
+            frog.set_direction(*last_direction_before_jump)
             jump_pending = False
             jump_duration = 0
 
