@@ -143,7 +143,7 @@ class Frog:
             scale = max_scale
         else:
             scale = min_scale + (max_scale - min_scale) * ((t - min_time) / (max_time - min_time))
-        max_dx = 100
+        max_dx = 80
         max_dy = 10
 
         # Use the current facing angle to determine direction

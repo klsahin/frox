@@ -128,8 +128,18 @@ def collisionDetection(objectsOnScreen):
     xgap = 0
     bottom_gap = 350 # reduce hitbox from the bottom by 40 pixels
     for object in (objectsOnScreen):
-        x_overlap = (lx + xgap < object.x + object.width and lx + frog.width  - xgap > object.x)
-        y_overlap = (ly + ygap < object.y + object.height and ly + frog.height - bottom_gap > object.y)
+        frog_left = frog.position[0] - frog.width // 2 + xgap
+        frog_right = frog.position[0] + frog.width // 2 - xgap
+        frog_top = frog.position[1] - frog.height // 2 + ygap
+        frog_bottom = frog.position[1] + frog.height // 2 - bottom_gap
+
+        object_left = object.x - object.width // 2
+        object_right = object.x + object.width // 2
+        object_top = object.y - object.height // 2
+        object_bottom = object.y + object.height // 2
+
+        x_overlap = frog_left < object_right and frog_right > object_left
+        y_overlap = frog_top < object_bottom and frog_bottom > object_top
         if x_overlap and y_overlap:
             return object
 
