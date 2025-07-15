@@ -19,7 +19,7 @@ if arduino:
     f.truncate()
 
     # Open the serial com
-    serialCom = serial.Serial('/dev/cu.usbserial-10',115200)
+    serialCom = serial.Serial('/dev/cu.usbserial-110',115200)
 
     # Toggle DTR to reset the Arduino
     serialCom.dtr = False
@@ -134,12 +134,12 @@ while running:
             s_bytes = serialCom.readline()
             decoded_bytes = s_bytes.decode("utf-8").strip('\r\n')
             #print(f"decoded bytes: {decoded_bytes}")
-            rightData, leftData = decoded_bytes.split(',')
-            print(f"decoded bytes: {leftData}, {rightData}")
+            leftData, rightData = decoded_bytes.split(',')
+            print(f"decoded bytes:         {leftData}, {rightData}")
             leftData = float(leftData)
             rightData = float(rightData)
             leftTurn = rightTurn  = False
-            threshold = 1000
+            threshold = 100
             if leftData > threshold: leftTurn = True
             if rightData > threshold: rightTurn = True
 

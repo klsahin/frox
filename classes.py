@@ -93,7 +93,7 @@ class Frog:
                 self.facing_angle += step
             elif self.facing_angle == 0:
                 # If facing front, turn left
-                self.facing_angle = step
+                self.facing_angle += step
             elif self.facing_angle > 0:
                 # If already left, turn more left (max 45)
                 self.facing_angle = min(self.facing_angle + step, max_angle)
@@ -105,7 +105,7 @@ class Frog:
                 self.facing_angle -= step
             elif self.facing_angle == 0:
                 # If facing front, turn right
-                self.facing_angle = -step
+                self.facing_angle -= step
             elif self.facing_angle < 0:
                 # If already right, turn more right (max -45)
                 self.facing_angle = max(self.facing_angle - step, -max_angle)
