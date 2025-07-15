@@ -130,6 +130,7 @@ class Frog:
             self.jump_frames = 5  # frog0 to frog4
         else:
             self.jump_frames = 7  # frog0 to frog6 (full jump)
+
         # Set jump direction based on facing
         min_scale = 0.5
         max_scale = 1.0
@@ -142,8 +143,9 @@ class Frog:
             scale = max_scale
         else:
             scale = min_scale + (max_scale - min_scale) * ((t - min_time) / (max_time - min_time))
-        max_dx = 30
+        max_dx = 100
         max_dy = 10
+
         # Use the current facing angle to determine direction
         if self.facing_set:
             if self.facing_angle > 0:  # left
@@ -162,37 +164,37 @@ class Frog:
         self.animating = True
         self.load_image()
 
-    def set_direction(self, left, right):
-        # Use jump_duration to scale jump distance
-        min_scale = 0.5
-        max_scale = 1.0
-        min_time = 1.0
-        max_time = 5.0
-        t = max(self.jump_duration, 0)
-        if t <= min_time:
-            scale = min_scale
-        elif t >= max_time:
-            scale = max_scale
-        else:
-            scale = min_scale + (max_scale - min_scale) * ((t - min_time) / (max_time - min_time))
-        max_dx = 30
-        max_dy = 10
-        max_angle = 60
-        if left and not right:
-            self.dx = -max_dx * scale
-            self.dy = 5 * scale
-            self.angle = max_angle * scale
-            self.animating = True
-        elif right and not left:
-            self.dx = max_dx * scale
-            self.dy = 5 * scale
-            self.angle = -max_angle * scale  #
-            self.animating = True
-        elif not left and not right: # straight and not jumping
-            self.dx = 0
-            self.dy = max_dy * scale
-            self.angle = 0
-            self.animating = True  # Always animate when straight
+    # def set_direction(self, left, right):
+    #     # Use jump_duration to scale jump distance
+    #     min_scale = 0.5
+    #     max_scale = 1.0
+    #     min_time = 1.0
+    #     max_time = 5.0
+    #     t = max(self.jump_duration, 0)
+    #     if t <= min_time:
+    #         scale = min_scale
+    #     elif t >= max_time:
+    #         scale = max_scale
+    #     else:
+    #         scale = min_scale + (max_scale - min_scale) * ((t - min_time) / (max_time - min_time))
+    #     max_dx = 100
+    #     max_dy = 10
+    #     max_angle = 60
+    #     if left and not right:
+    #         self.dx = -max_dx * scale
+    #         self.dy = 5 * scale
+    #         self.angle = max_angle * scale
+    #         self.animating = True
+    #     elif right and not left:
+    #         self.dx = max_dx * scale
+    #         self.dy = 5 * scale
+    #         self.angle = -max_angle * scale  #
+    #         self.animating = True
+    #     elif not left and not right: # straight and not jumping
+    #         self.dx = 0
+    #         self.dy = max_dy * scale
+    #         self.angle = 0
+    #         self.animating = True  # Always animate when straight
 
     def draw_shadow(self, screen):
         show_shadow = self.in_air and self.frame >= 2
@@ -217,7 +219,7 @@ class Frog:
         if self.jumping and now - self.last_update > self.animation_speed:
             self.last_update = now
             # Clamp movement to screen bounds (center-based)
-            if (self.position[0] - self.width // 2 < 40 and self.dx < 0) or (self.position[0] + self.width // 2 > 450 and self.dx > 0):
+            if (self.position[0] - self.width // 2 < 40 and self.dx < 0) or (self.position[0] + self.width // 2 > 700 and self.dx > 0):
                 self.dx = 0
                 self.dy = 5
                 self.flip = False

@@ -55,6 +55,7 @@ fruits = []
 num_objects = 5
 vertical_spacing = screenHeight // num_objects
 
+
 # Only one fruit at a time, randomly in one of the three lanes
 active_objects = []
 
@@ -68,7 +69,20 @@ def spawn_single_object():
     else:
         return Obstacle(lane_x[lane], object_spawn_y, object_width, object_height)
 
-#active_objects.append(spawn_single_object())
+def spawn_initial_objects(numObjects):
+    objectsToAdd = []
+    for i in range(1, numObjects + 1):
+        objectList = ["Fruit"] * 3 + ["Obstacle"] * 1
+        object = random.choice(objectList)
+        lane = random.choice([0, 1, 2])
+        if object == "Fruit":
+            fruit_type = random.randint(1, 3)
+            objectsToAdd.append(Fruit(lane_x[lane], object_spawn_y + i * vertical_spacing, object_width, object_height, fruit_type))
+        else:
+            objectsToAdd.append(Obstacle(lane_x[lane], object_spawn_y + i * vertical_spacing, object_width, object_height))
+    return objectsToAdd
+
+
 
 def draw_objects():
     leaves.draw(screen)
@@ -79,7 +93,8 @@ prev_input = (False, False)
 start = True
 score = 0
 objectsOnScreen = []
-objectsOnScreen.append(spawn_single_object()) #initial object
+#objectsOnScreen.append(spawn_single_object()) #initial object
+objectsOnScreen.extend(spawn_initial_objects(2))
 
 font_path = 'assets/SuperBubble.ttf'
 try:
@@ -109,8 +124,8 @@ def collisionDetection(objectsOnScreen):
     if frog.in_air:
         return None
     [lx, ly] = frog.position
-    ygap = 50 # offset for frog image (top)
-    xgap = 25
+    ygap = 0 # offset for frog image (top)
+    xgap = 0
     bottom_gap = 350 # reduce hitbox from the bottom by 40 pixels
     for object in (objectsOnScreen):
         x_overlap = (lx + xgap < object.x + object.width and lx + frog.width  - xgap > object.x)
@@ -237,7 +252,8 @@ while running:
         # Move and draw the single fruit
         if objectsOnScreen != []:
             for obj in objectsOnScreen:
-                obj.y += screen_speed  # Move down with the tree scroll speed
+                if frog.in_air:
+                    obj.y += screen_speed  # Move down with the tree scroll speed
                 obj.position[1] = obj.y
                 obj.load_image(screen)
             if objectsOnScreen[-1].y > vertical_spacing:
