@@ -3,7 +3,7 @@ from classes import *
 import random
 import time
 
-arduino = True  # Set to True to use Arduino, False to use keyboard
+arduino = False  # Set to True to use Arduino, False to use keyboard
 
 if arduino:
     import serial
@@ -68,7 +68,6 @@ def spawn_single_object():
     else:
         return Obstacle(lane_x[lane], object_spawn_y, object_width, object_height)
 
-
 #active_objects.append(spawn_single_object())
 
 def draw_objects():
@@ -100,6 +99,9 @@ jump_pending = False
 jump_duration = 0
 max_jump_time = 5.0  # seconds for full jump
 
+# Add this variable to track space bar state for keyboard mode
+space_was_pressed = False
+
 direction_list = []
 
 def collisionDetection(objectsOnScreen):
@@ -125,8 +127,6 @@ while running:
         screen_speed = int(speed * (1 + score/100))
     else:
         screen_speed = speed
-
-
 
     try:
         if arduino:
@@ -156,7 +156,6 @@ while running:
                     direction_list.append(0)
 
                 averaged_direction = (leftTurn, rightTurn)
-
 
             # When both are pressed (jump initiation)
             if (leftTurn and rightTurn) and not jump_button_held:
@@ -192,30 +191,34 @@ while running:
                     jump_duration = 0
                 jump_pending = True
 
-
-
         else:
-            for event in pygame.event.get():
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_SPACE and not jump_button_held:
-                        jump_button_held = True
-                        jump_press_time = time.time()
-                elif event.type == pygame.KEYUP:
-                    if event.key == pygame.K_SPACE and jump_button_held:
-                        jump_button_held = False
-                        jump_release_time = time.time()
-                        if jump_press_time is not None:
-                            raw_duration = jump_release_time - jump_press_time
-                            print(f"Raw duration: {raw_duration:.2f} seconds")
-                            jump_duration = raw_duration
-                            if jump_duration > max_jump_time:
-                                jump_duration = max_jump_time
-                            print(f"Capped jump_duration: {jump_duration:.2f} seconds")
-                        else:
-                            jump_duration = 0
-                        jump_pending = True
             keys = pygame.key.get_pressed()
-            averaged_direction = (keys[pygame.K_LEFT], keys[pygame.K_RIGHT])
+            leftTurn = keys[pygame.K_a]
+            rightTurn = keys[pygame.K_d]
+            averaged_direction = (leftTurn, rightTurn)
+
+            # --- Improved jump logic for keyboard ---
+            space_pressed = keys[pygame.K_SPACE]
+            if space_pressed and not space_was_pressed:
+                # Space just pressed
+                jump_button_held = True
+                jump_press_time = time.time()
+            elif not space_pressed and space_was_pressed and jump_button_held:
+                # Space just released
+                jump_button_held = False
+                jump_release_time = time.time()
+                if jump_press_time is not None:
+                    raw_duration = jump_release_time - jump_press_time
+                    print(f"Raw duration: {raw_duration:.2f} seconds")
+                    jump_duration = raw_duration
+                    if jump_duration > max_jump_time:
+                        jump_duration = max_jump_time
+                    print(f"Capped jump_duration: {jump_duration:.2f} seconds")
+                else:
+                    jump_duration = 0
+                jump_pending = True
+            # Update space_was_pressed for next frame
+            space_was_pressed = space_pressed
 
         # New frog control logic:
         # If only one leg is pressed, set facing (rotate, no jump)
