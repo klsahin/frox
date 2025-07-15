@@ -34,8 +34,7 @@ class Tree:
     def scroll(self, dy, isJumping):
         if isJumping:
             self.y_offset += dy
-        # else:
-        #     self.y_offset = 0
+        
 
 
 class Frog:
