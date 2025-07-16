@@ -4,6 +4,7 @@ import random
 import time
 
 arduino = True  # Set to True to use Arduino, False to use keyboard
+arduino = True  # Set to True to use Arduino, False to use keyboard
 
 if arduino:
     import serial
@@ -19,7 +20,7 @@ if arduino:
     f.truncate()
 
     # Open the serial com
-    serialCom = serial.Serial('/dev/cu.usbserial-110',115200)
+    serialCom = serial.Serial('/dev/cu.usbserial-10',115200)
 
     # Toggle DTR to reset the Arduino
     serialCom.dtr = False
@@ -153,6 +154,12 @@ while running:
     else:
         screen_speed = speed
 
+    # Make background and objects scroll faster when frog is in the air
+    if frog.in_air:
+        scroll_speed = screen_speed * 2.5
+    else:
+        scroll_speed = screen_speed
+
     try:
         if arduino:
             serialCom.reset_input_buffer()  # Clear the input buffer
@@ -183,6 +190,7 @@ while running:
                 averaged_direction = (leftTurn, rightTurn)
 
             # When both are pressed (jump initiation)
+
             if (leftTurn and rightTurn) and not jump_button_held:
                 jump_button_held = True
                 jump_press_time = time.time()
@@ -253,7 +261,7 @@ while running:
             prev_input = averaged_direction
 
         leaves.draw(screen)
-        tree.scroll(screen_speed, frog.in_air)
+        tree.scroll(scroll_speed, frog.in_air)
         tree.draw(screen)
         frog.draw_shadow(screen)
         score_text = font.render(str(score), True, font_color)
@@ -263,7 +271,7 @@ while running:
         if objectsOnScreen != []:
             for obj in objectsOnScreen:
                 if frog.in_air:
-                    obj.y += screen_speed  # Move down with the tree scroll speed
+                    obj.y += scroll_speed  # Only move down when frog is in the air
                 obj.position[1] = obj.y
                 obj.load_image(screen)
             if objectsOnScreen[-1].y > vertical_spacing:
