@@ -3,7 +3,7 @@ from classes import *
 import random
 import time
 
-arduino = False  # Set to True to use Arduino, False to use keyboard
+arduino = True  # Set to True to use Arduino, False to use keyboard
 
 if arduino:
     import serial
@@ -125,7 +125,7 @@ def collisionDetection(objectsOnScreen):
         return None
     [lx, ly] = frog.position
     ygap = 0 # offset for frog image (top)
-    xgap = 0
+    xgap = 50
     bottom_gap = 350 # reduce hitbox from the bottom by 40 pixels
     for object in (objectsOnScreen):
         frog_left = frog.position[0] - frog.width // 2 + xgap
@@ -164,7 +164,7 @@ while running:
             leftData = float(leftData)
             rightData = float(rightData)
             leftTurn = rightTurn  = False
-            threshold = 100
+            threshold = 1000
             if leftData > threshold: leftTurn = True
             if rightData > threshold: rightTurn = True
 
