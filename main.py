@@ -177,8 +177,10 @@ while running:
             if not (leftTurn and rightTurn):
                 # Record direction: -1 for left, 1 for right, 0 for straight
                 if leftTurn and not rightTurn:
+                    frog.set_facing(6, False, False)
                     direction_list.append(-1)
                 elif rightTurn and not leftTurn:
+                    frog.set_facing(-6, False, False)
                     direction_list.append(1)
                 else:
                     direction_list.append(0)
@@ -251,10 +253,11 @@ while running:
 
         # New frog control logic:
         # If only one leg is pressed, set facing (rotate, no jump)
-        if averaged_direction != prev_input:
-            if (averaged_direction[0] and not averaged_direction[1]) or (averaged_direction[1] and not averaged_direction[0]):
-                frog.set_facing(*averaged_direction)
-            prev_input = averaged_direction
+        if averaged_direction[0] and not averaged_direction[1]:
+            frog.set_facing(0, *averaged_direction)  # Left turn
+        elif averaged_direction[1] and not averaged_direction[0]:
+            frog.set_facing(0, *averaged_direction)  # Right turn
+        #prev_input = averaged_direction
 
         leaves.draw(screen)
         tree.scroll(scroll_speed, frog.in_air)

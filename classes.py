@@ -77,47 +77,41 @@ class Frog:
         self.image = pygame.transform.rotate(self.image, self.angle)
         self.rect = self.image.get_rect(center=orig_center)
 
-    def set_facing(self, left, right):
+    def set_facing(self, angle, left, right):
         """
         Set frog's facing direction based on single leg input.
         Only rotates, does not jump.
         """
         # Define step angle (now 45 deg)
-        step = 45
-        max_angle = 45
-        # Only one direction at a time
-        if left and not right:
-            if self.facing_angle < 0:
-                # If facing right, move toward front
-                self.facing_angle += step
-            elif self.facing_angle == 0:
-                # If facing front, turn left
-                self.facing_angle += step
-            elif self.facing_angle > 0:
-                # If already left, turn more left (max 45)
-                self.facing_angle = min(self.facing_angle + step, max_angle)
-            self.last_facing = self.facing_angle
-            self.facing_set = True
-        elif right and not left:
-            if self.facing_angle > 0:
-                # If facing left, move toward front
-                self.facing_angle -= step
-            elif self.facing_angle == 0:
-                # If facing front, turn right
-                self.facing_angle -= step
-            elif self.facing_angle < 0:
-                # If already right, turn more right (max -45)
-                self.facing_angle = max(self.facing_angle - step, -max_angle)
-            self.last_facing = self.facing_angle
+        
+        max_angle = 75
+        
+        # Increment angle by 6 degrees (3 steps of 2)
+        for i in range(3):
+            if angle != 0:  
+                self.angle += angle // 3
+                if self.angle > max_angle:
+                    self.angle = max_angle
+                elif self.angle < -max_angle:
+                    self.angle = -max_angle
+
+            # Cycle through frames: 0 -> 1 -> 0
+            if i == 0:
+                self.frame = 0
+            elif i == 1:
+                self.frame = 1
+            else:  # i == 2
+                self.frame = 0
+                
+            self.path = f'assets/frog{self.frame}.png'
+            self.load_image()
+
+        self.facing_angle = self.angle
+        if (left and not right) or (right and not left):
             self.facing_set = True
         else:
-            self.facing_angle = 0  # forward
-            self.last_facing = 0
             self.facing_set = False
-        self.angle = self.facing_angle
-        print(f"Facing angle updated to: {self.facing_angle}")
-
-        self.load_image()
+        
 
     def start_jump(self, jump_duration):
         print(f"Jump triggered! Duration: {jump_duration:.2f} seconds")
