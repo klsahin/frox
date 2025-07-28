@@ -4,7 +4,7 @@ import random
 import time
 
 
-arduino = False  # Set to True to use Arduino, False to use keyboard
+arduino = True  # Set to True to use Arduino, False to use keyboard
 
 if arduino:
     import serial
@@ -20,7 +20,7 @@ if arduino:
     f.truncate()
 
     # Open the serial com
-    serialCom = serial.Serial('/dev/cu.usbserial-110',115200)
+    serialCom = serial.Serial('/dev/cu.usbserial-10',115200)
 
     # Toggle DTR to reset the Arduino
     serialCom.dtr = False
@@ -61,14 +61,17 @@ vertical_spacing = screenHeight // num_objects
 active_objects = []
 
 def spawn_single_object():
+    objectsToAdd = []
     objectList = ["Fruit"] * 3 + ["Obstacle"] * 1
     object = random.choice(objectList)
     lane = random.choice([0, 1, 2])
     if object == "Fruit":
         fruit_type = random.randint(1, 3)
-        return Fruit(lane_x[lane], object_spawn_y, object_width, object_height, fruit_type)
+        objectsToAdd.append(Fruit(lane_x[lane], object_spawn_y, object_width, object_height, fruit_type))
     else:
-        return Obstacle(lane_x[lane], object_spawn_y, object_width, object_height)
+        for i in range(3):
+            objectsToAdd.append(Obstacle(lane_x[i], object_spawn_y, object_width, object_height))
+    return objectsToAdd
 
 def spawn_initial_objects(numObjects):
     objectsToAdd = []
@@ -274,7 +277,7 @@ while running:
                 obj.position[1] = obj.y
                 obj.load_image(screen)
             if objectsOnScreen[-1].y > vertical_spacing:
-                objectsOnScreen.append(spawn_single_object())
+                objectsOnScreen.extend(spawn_single_object())
 
         # Only trigger jump if pending
         if jump_pending:
