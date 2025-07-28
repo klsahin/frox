@@ -95,13 +95,14 @@ class Frog:
                 elif self.angle < -max_angle:
                     self.angle = -max_angle
 
-            # Cycle through frames: 0 -> 1 -> 0
-            if i == 0:
-                self.frame = 0
-            elif i == 1:
-                self.frame = 1
-            else:  # i == 2
-                self.frame = 0
+        # # this part doesnt work :(
+        #     # Cycle through frames: 0 -> 1 -> 0
+        #     if i == 0:
+        #         self.frame = 0
+        #     elif i == 1:
+        #         self.frame = 1
+        #     else:  # i == 2
+        #         self.frame = 0
                 
             self.path = f'assets/frog{self.frame}.png'
             self.load_image()
@@ -119,13 +120,15 @@ class Frog:
         self.jump_duration = jump_duration
         self.frame = 0
         self.in_air = True
-        # Determine jump animation length
-        if jump_duration <= 1.0:
-            self.jump_frames = 3  # frog0 to frog2
-        elif jump_duration <= 3.0:
-            self.jump_frames = 5  # frog0 to frog4
-        else:
-            self.jump_frames = 7  # frog0 to frog6 (full jump)
+        # # Determine jump animation length
+        # if jump_duration <= 1.0:
+        #     self.jump_frames = 3  # frog0 to frog2
+        # elif jump_duration <= 3.0:
+        #     self.jump_frames = 5  # frog0 to frog4
+        # else:
+        #     self.jump_frames = 7  # frog0 to frog6 (full jump)
+
+        self.jump_frames = 7
 
         # Set jump direction based on facing
         min_scale = 0.5
