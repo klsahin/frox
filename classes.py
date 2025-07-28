@@ -121,14 +121,13 @@ class Frog:
         self.frame = 0
         self.in_air = True
         # # Determine jump animation length
-        # if jump_duration <= 1.0:
-        #     self.jump_frames = 3  # frog0 to frog2
-        # elif jump_duration <= 3.0:
-        #     self.jump_frames = 5  # frog0 to frog4
-        # else:
-        #     self.jump_frames = 7  # frog0 to frog6 (full jump)
+        if jump_duration <= 1.0:
+            self.jump_frames = 3  # frog0 to frog2
+        elif jump_duration <= 3.0:
+            self.jump_frames = 5  # frog0 to frog4
+        else:
+            self.jump_frames = 7  # frog0 to frog6 (full jump)
 
-        self.jump_frames = 7
 
         # Set jump direction based on facing
         min_scale = 0.5
@@ -144,14 +143,15 @@ class Frog:
             scale = min_scale + (max_scale - min_scale) * ((t - min_time) / (max_time - min_time))
         max_dx = 80
         max_dy = 10
+        dx_scale = 0.25
 
         # Use the current facing angle to determine direction
         if self.facing_set:
             if self.facing_angle > 0:  # left
-                self.dx = -max_dx * scale
+                self.dx = -max_dx * dx_scale
                 self.angle = self.facing_angle
             elif self.facing_angle < 0:  # right
-                self.dx = max_dx * scale
+                self.dx = max_dx * dx_scale
                 self.angle = self.facing_angle
             else:  # forward
                 self.dx = 0
