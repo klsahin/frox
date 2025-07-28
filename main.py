@@ -3,8 +3,8 @@ from classes import *
 import random
 import time
 
-arduino = True  # Set to True to use Arduino, False to use keyboard
-arduino = True  # Set to True to use Arduino, False to use keyboard
+
+arduino = False  # Set to True to use Arduino, False to use keyboard
 
 if arduino:
     import serial
@@ -20,7 +20,7 @@ if arduino:
     f.truncate()
 
     # Open the serial com
-    serialCom = serial.Serial('/dev/cu.usbserial-10',115200)
+    serialCom = serial.Serial('/dev/cu.usbserial-110',115200)
 
     # Toggle DTR to reset the Arduino
     serialCom.dtr = False
@@ -121,28 +121,24 @@ space_was_pressed = False
 direction_list = []
 
 def collisionDetection(objectsOnScreen):
-    if objectsOnScreen == []: return None
-    if frog.in_air:
+    if not objectsOnScreen or frog.in_air:
         return None
-    [lx, ly] = frog.position
-    ygap = 0 # offset for frog image (top)
-    xgap = 50
-    bottom_gap = 350 # reduce hitbox from the bottom by 40 pixels
-    for object in (objectsOnScreen):
-        frog_left = frog.position[0] - frog.width // 2 + xgap
-        frog_right = frog.position[0] + frog.width // 2 - xgap
-        frog_top = frog.position[1] - frog.height // 2 + ygap
-        frog_bottom = frog.position[1] + frog.height // 2 - bottom_gap
 
-        object_left = object.x - object.width // 2
-        object_right = object.x + object.width // 2
-        object_top = object.y - object.height // 2
-        object_bottom = object.y + object.height // 2
+    frog_rect = frog.get_hitbox()
 
-        x_overlap = frog_left < object_right and frog_right > object_left
-        y_overlap = frog_top < object_bottom and frog_bottom > object_top
-        if x_overlap and y_overlap:
+    for object in objectsOnScreen:
+        object_rect = pygame.Rect(
+            object.x - object.width // 2,
+            object.y - object.height // 2,
+            object.width,
+            object.height
+        )
+
+        if frog_rect.colliderect(object_rect):
             return object
+
+    return None  # No collisions found
+
 
 while running:
     for event in pygame.event.get():

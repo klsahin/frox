@@ -34,7 +34,7 @@ class Tree:
     def scroll(self, dy, isJumping):
         if isJumping:
             self.y_offset += dy
-        
+
 
 
 class Frog:
@@ -115,6 +115,8 @@ class Frog:
             self.last_facing = 0
             self.facing_set = False
         self.angle = self.facing_angle
+        print(f"Facing angle updated to: {self.facing_angle}")
+
         self.load_image()
 
     def start_jump(self, jump_duration):
@@ -195,6 +197,29 @@ class Frog:
     #         self.dy = max_dy * scale
     #         self.angle = 0
     #         self.animating = True  # Always animate when straight
+    def get_hitbox(self):
+        angle = self.facing_angle  # This is -45, 0, or 45
+
+        # Shrinking effect: more angle → smaller width
+        shrink_factor = abs(angle) / 45  # 0 to 1
+        xgap = 50 + 20 * shrink_factor   # 30 → 50
+        ygap = 35
+        bottom_gap = 225
+
+        # Horizontal shift: frog tilts left → hitbox nudges left
+        offset_x = -45 * (angle / 45)  # -15 if left, 0 if center, +15 if right
+
+        center_x = self.position[0] + offset_x
+        center_y = self.position[1]
+
+        left = center_x - self.width // 2 + xgap
+        right = center_x + self.width // 2 - xgap
+        top = center_y - self.height // 2 + ygap
+        bottom = center_y + self.height // 2 - bottom_gap
+
+        return pygame.Rect(left, top, right - left, bottom - top)
+
+
 
     def draw_shadow(self, screen):
         show_shadow = self.in_air and self.frame >= 2
@@ -244,8 +269,13 @@ class Frog:
             self.path = 'assets/frog0.png'
             self.load_image()
             self.in_air = False
-            print("not jumping, reset")
+            #print("not jumping, reset")
         screen.blit(self.image, self.rect.topleft)
+        # DEBUG: Draw hitbox rectangle
+        debug_hitbox = self.get_hitbox()
+        #pygame.draw.rect(screen, (255, 0, 0), self.get_hitbox(), 2)
+
+
 
 
 
