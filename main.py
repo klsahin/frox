@@ -4,7 +4,7 @@ import random
 import time
 
 
-arduino = True  # Set to True to use Arduino, False to use keyboard
+arduino = False  # Set to True to use Arduino, False to use keyboard
 
 if arduino:
     import serial
@@ -44,11 +44,13 @@ running = True
 leaves = Leaves(screenWidth, screenHeight)
 tree = Tree(screenWidth,screenHeight)
 tree.load_image()
-frog = Frog(300, 400, 260, 390, 1)  # Example parameters for Frog
+frog = Frog(300, 450, 200, 290, 1)  # 180, 265 is the size of the frog
 frog.load_image()
 
 # Lane positions for fruit (divide crawlable path into 3 lanes)
 lane_x = [160 + 15, 300 + 15, 440 + 15]  # Shift all lanes 15 pixels to the right
+fruit_clump = [0, -40, 40]
+obstacle_clump = [0, -75, 75]
 object_width = 75
 object_height = 75
 object_spawn_y = -80  # Start just above the screen
@@ -66,11 +68,30 @@ def spawn_single_object():
     object = random.choice(objectList)
     lane = random.choice([0, 1, 2])
     if object == "Fruit":
+        if random.random() < 0.60: 
+            num = 1   # 60% chance of 1 fruit
+        elif random.random() < 0.80:
+            num = 2   # 20 % chance of 2 fruits
+        else:
+            num = 3   # 20 % chance of 3 fruits
+        
         fruit_type = random.randint(1, 3)
-        objectsToAdd.append(Fruit(lane_x[lane], object_spawn_y, object_width, object_height, fruit_type))
+        for i in range(num):   
+            objectsToAdd.append(Fruit(lane_x[lane] + fruit_clump[i], object_spawn_y, object_width, object_height, fruit_type))
     else:
-        for i in range(3):
-            objectsToAdd.append(Obstacle(lane_x[i], object_spawn_y, object_width, object_height))
+        if objectsOnScreen[-1] == Obstacle: # less chance of many obstacles if last object was an obstacle
+            chance = 0.80
+        else:
+            chance = 0.40
+
+        if random.random() < chance: 
+            num = 1
+        else:
+            num = 3        
+        
+        for i in range(num):
+            objectsToAdd.append(Obstacle(lane_x[lane] + obstacle_clump[i], object_spawn_y, object_width, object_height))
+
     return objectsToAdd
 
 def spawn_initial_objects(numObjects):
