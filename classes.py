@@ -95,14 +95,6 @@ class Frog:
                 elif self.angle < -max_angle:
                     self.angle = -max_angle
 
-        # # this part doesnt work :(
-        #     # Cycle through frames: 0 -> 1 -> 0
-        #     if i == 0:
-        #         self.frame = 0
-        #     elif i == 1:
-        #         self.frame = 1
-        #     else:  # i == 2
-        #         self.frame = 0
                 
             self.path = f'assets/frog{self.frame}.png'
             self.load_image()
@@ -143,7 +135,7 @@ class Frog:
             scale = min_scale + (max_scale - min_scale) * ((t - min_time) / (max_time - min_time))
         max_dx = 80
         max_dy = 10
-        dx_scale = 0.25
+        dx_scale = 0.40
 
         # Use the current facing angle to determine direction
         if self.facing_set:
@@ -163,44 +155,14 @@ class Frog:
         self.animating = True
         self.load_image()
 
-    # def set_direction(self, left, right):
-    #     # Use jump_duration to scale jump distance
-    #     min_scale = 0.5
-    #     max_scale = 1.0
-    #     min_time = 1.0
-    #     max_time = 5.0
-    #     t = max(self.jump_duration, 0)
-    #     if t <= min_time:
-    #         scale = min_scale
-    #     elif t >= max_time:
-    #         scale = max_scale
-    #     else:
-    #         scale = min_scale + (max_scale - min_scale) * ((t - min_time) / (max_time - min_time))
-    #     max_dx = 100
-    #     max_dy = 10
-    #     max_angle = 60
-    #     if left and not right:
-    #         self.dx = -max_dx * scale
-    #         self.dy = 5 * scale
-    #         self.angle = max_angle * scale
-    #         self.animating = True
-    #     elif right and not left:
-    #         self.dx = max_dx * scale
-    #         self.dy = 5 * scale
-    #         self.angle = -max_angle * scale  #
-    #         self.animating = True
-    #     elif not left and not right: # straight and not jumping
-    #         self.dx = 0
-    #         self.dy = max_dy * scale
-    #         self.angle = 0
-    #         self.animating = True  # Always animate when straight
+
     def get_hitbox(self):
         angle = self.facing_angle  # This is -45, 0, or 45
 
         # Shrinking effect: more angle → smaller width
         shrink_factor = abs(angle) / 45  # 0 to 1
-        xgap = 50 + 20 * shrink_factor   # 30 → 50
-        ygap = 35
+        xgap = 40 + 5 * shrink_factor   # 30 → 35 (smaller gap)
+        ygap = 10
         bottom_gap = 225
 
         # Horizontal shift: frog tilts left → hitbox nudges left

@@ -20,7 +20,7 @@ if arduino:
     f.truncate()
 
     # Open the serial com
-    serialCom = serial.Serial('/dev/cu.usbserial-10',115200)
+    serialCom = serial.Serial('/dev/cu.usbserial-110',115200)
 
     # Toggle DTR to reset the Arduino
     serialCom.dtr = False
@@ -44,7 +44,7 @@ running = True
 leaves = Leaves(screenWidth, screenHeight)
 tree = Tree(screenWidth,screenHeight)
 tree.load_image()
-frog = Frog(300, 450, 200, 290, 1)  # 180, 265 is the size of the frog
+frog = Frog(300, 450, 200, 290, 1)  
 frog.load_image()
 
 # Lane positions for fruit (divide crawlable path into 3 lanes)
@@ -191,7 +191,7 @@ while running:
             leftData = float(leftData)
             rightData = float(rightData)
             leftTurn = rightTurn  = False
-            threshold = 1000
+            threshold = 500
             if leftData > threshold: leftTurn = True
             if rightData > threshold: rightTurn = True
 
@@ -252,8 +252,14 @@ while running:
             rightTurn = keys[pygame.K_d]
             averaged_direction = (leftTurn, rightTurn)
 
+            # when turning:
+            if leftTurn and not rightTurn:
+                frog.set_facing(6, False, False)
+            elif rightTurn and not leftTurn:
+                frog.set_facing(-6, False, False)
+
             # --- Improved jump logic for keyboard ---
-            space_pressed = keys[pygame.K_SPACE]
+            space_pressed = keys[pygame.K_SPACE] or keys[pygame.K_w]
             if space_pressed and not space_was_pressed:
                 # Space just pressed
                 jump_button_held = True
