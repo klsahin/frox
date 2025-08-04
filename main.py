@@ -4,7 +4,7 @@ import random
 import time
 
 
-arduino = False  # Set to True to use Arduino, False to use keyboard
+arduino = True  # Set to True to use Arduino, False to use keyboard
 
 if arduino:
     import serial
@@ -68,9 +68,9 @@ def spawn_single_object():
     object = random.choice(objectList)
     lane = random.choice([0, 1, 2])
     if object == "Fruit":
-        if random.random() < 0.60: 
+        if random.random() < 0.20: 
             num = 1   # 60% chance of 1 fruit
-        elif random.random() < 0.80:
+        elif random.random() < 0.60:
             num = 2   # 20 % chance of 2 fruits
         else:
             num = 3   # 20 % chance of 3 fruits
@@ -82,7 +82,7 @@ def spawn_single_object():
         if objectsOnScreen[-1] == Obstacle: # less chance of many obstacles if last object was an obstacle
             chance = 0.80
         else:
-            chance = 0.40
+            chance = 0.10
 
         if random.random() < chance: 
             num = 1

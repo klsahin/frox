@@ -217,10 +217,10 @@ class Frog:
                 self.jumping = False
                 self.in_air = False
                 # Reset facing to forward after jump
-                self.facing_angle = 0
-                self.last_facing = 0
-                self.facing_set = False
-                self.angle = 0
+                # self.facing_angle = 0
+                # self.last_facing = 0
+                # self.facing_set = False
+                # self.angle = 0
                 self.load_image()
             print("jumping")
         elif not self.jumping:
