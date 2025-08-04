@@ -139,10 +139,10 @@ class Frog:
 
         # Use the current facing angle to determine direction
         if self.facing_set:
-            if self.facing_angle > 0:  # left
+            if self.facing_angle > 20:  # left
                 self.dx = -max_dx * dx_scale
                 self.angle = self.facing_angle
-            elif self.facing_angle < 0:  # right
+            elif self.facing_angle < -20:  # right
                 self.dx = max_dx * dx_scale
                 self.angle = self.facing_angle
             else:  # forward
